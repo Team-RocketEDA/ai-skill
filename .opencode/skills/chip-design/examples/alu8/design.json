@@ -1,0 +1,168 @@
+{
+  "schema": "rocketeda/design/v0.1",
+  "project": "alu8",
+  "target_level": "transistor",
+  "requirements": [
+    {
+      "id": "R1",
+      "text": "8-bit ALU supports addition and subtraction on operands a and b.",
+      "source": "user",
+      "acceptance": [
+        "y == (a + b) mod 256 when opcode selects ADD",
+        "y == (a - b) mod 256 when opcode selects SUB"
+      ]
+    },
+    {
+      "id": "R2",
+      "text": "The ALU supports bitwise AND, OR, XOR and NOT.",
+      "source": "user",
+      "acceptance": [
+        "y == a & b, a | b, a ^ b for the matching opcode",
+        "y == ~a for the NOT opcode"
+      ]
+    },
+    {
+      "id": "R3",
+      "text": "A 3-bit opcode selects exactly one operation.",
+      "source": "user",
+      "acceptance": [
+        "each of the six defined opcodes produces its operation",
+        "undefined opcodes produce y == 0"
+      ]
+    },
+    {
+      "id": "R4",
+      "text": "Zero and carry flags reflect the current result.",
+      "source": "user",
+      "acceptance": [
+        "zero == 1 exactly when y == 0",
+        "carry == 1 exactly when addition or subtraction overflows 8 bits"
+      ]
+    },
+    {
+      "id": "R5",
+      "text": "Operands and result are 8 bits; opcode is 3 bits.",
+      "source": "user",
+      "acceptance": [
+        "all data ports are 8 bits wide",
+        "opcode is 3 bits wide"
+      ]
+    }
+  ],
+  "blocks": [
+    {
+      "id": "alu",
+      "parent": null,
+      "level": "architecture",
+      "kind": "combinational",
+      "purpose": "Top-level 8-bit ALU: decode the opcode, compute arithmetic and logic results, select one, and derive the flags.",
+      "status": "GENERATED",
+      "requirements": ["R1", "R2", "R3", "R4", "R5"],
+      "required_checks": ["struct.widths", "struct.connectivity", "func.truth_table"],
+      "ports": [
+        { "name": "a", "direction": "input", "width": 8, "kind": "logic" },
+        { "name": "b", "direction": "input", "width": 8, "kind": "logic" },
+        { "name": "op", "direction": "input", "width": 3, "kind": "logic" },
+        { "name": "y", "direction": "output", "width": 8, "kind": "logic" },
+        { "name": "zero", "direction": "output", "width": 1, "kind": "logic" },
+        { "name": "carry", "direction": "output", "width": 1, "kind": "logic" }
+      ]
+    },
+    {
+      "id": "decode",
+      "parent": "alu",
+      "level": "architecture",
+      "kind": "combinational",
+      "purpose": "Turn the 3-bit opcode into the control signals used by the datapath.",
+      "status": "GENERATED",
+      "requirements": ["R3"],
+      "required_checks": ["func.truth_table"],
+      "ports": [
+        { "name": "op", "direction": "input", "width": 3, "kind": "logic" },
+        { "name": "sub", "direction": "output", "width": 1, "kind": "logic" }
+      ]
+    },
+    {
+      "id": "arith",
+      "parent": "alu",
+      "level": "architecture",
+      "kind": "combinational",
+      "purpose": "Shared add/subtract datapath with carry out.",
+      "status": "GENERATED",
+      "requirements": ["R1", "R4", "R5"],
+      "required_checks": ["struct.widths", "func.arithmetic"],
+      "ports": [
+        { "name": "a", "direction": "input", "width": 8, "kind": "logic" },
+        { "name": "b", "direction": "input", "width": 8, "kind": "logic" },
+        { "name": "sub", "direction": "input", "width": 1, "kind": "logic" },
+        { "name": "y", "direction": "output", "width": 8, "kind": "logic" },
+        { "name": "carry", "direction": "output", "width": 1, "kind": "logic" }
+      ]
+    },
+    {
+      "id": "logic",
+      "parent": "alu",
+      "level": "architecture",
+      "kind": "combinational",
+      "purpose": "Bitwise AND, OR, XOR and NOT unit.",
+      "status": "GENERATED",
+      "requirements": ["R2", "R5"],
+      "required_checks": ["func.truth_table"],
+      "ports": [
+        { "name": "a", "direction": "input", "width": 8, "kind": "logic" },
+        { "name": "b", "direction": "input", "width": 8, "kind": "logic" },
+        { "name": "op", "direction": "input", "width": 3, "kind": "logic" },
+        { "name": "y", "direction": "output", "width": 8, "kind": "logic" }
+      ]
+    },
+    {
+      "id": "select",
+      "parent": "alu",
+      "level": "architecture",
+      "kind": "combinational",
+      "purpose": "Select the arithmetic or logic result for the current opcode.",
+      "status": "GENERATED",
+      "requirements": ["R3", "R5"],
+      "required_checks": ["func.truth_table"],
+      "ports": [
+        { "name": "arith_y", "direction": "input", "width": 8, "kind": "logic" },
+        { "name": "logic_y", "direction": "input", "width": 8, "kind": "logic" },
+        { "name": "op", "direction": "input", "width": 3, "kind": "logic" },
+        { "name": "y", "direction": "output", "width": 8, "kind": "logic" }
+      ]
+    },
+    {
+      "id": "flags",
+      "parent": "alu",
+      "level": "architecture",
+      "kind": "combinational",
+      "purpose": "Derive zero and carry from the selected result and the arithmetic carry.",
+      "status": "GENERATED",
+      "requirements": ["R4"],
+      "required_checks": ["func.truth_table"],
+      "ports": [
+        { "name": "y", "direction": "input", "width": 8, "kind": "logic" },
+        { "name": "carry", "direction": "input", "width": 1, "kind": "logic" },
+        { "name": "zero", "direction": "output", "width": 1, "kind": "logic" },
+        { "name": "carry_out", "direction": "output", "width": 1, "kind": "logic" }
+      ]
+    }
+  ],
+  "connections": [
+    { "from": "alu.a", "to": "arith.a" },
+    { "from": "alu.b", "to": "arith.b" },
+    { "from": "alu.op", "to": "decode.op" },
+    { "from": "decode.sub", "to": "arith.sub" },
+    { "from": "alu.a", "to": "logic.a" },
+    { "from": "alu.b", "to": "logic.b" },
+    { "from": "alu.op", "to": "logic.op" },
+    { "from": "arith.y", "to": "select.arith_y" },
+    { "from": "logic.y", "to": "select.logic_y" },
+    { "from": "alu.op", "to": "select.op" },
+    { "from": "select.y", "to": "alu.y" },
+    { "from": "select.y", "to": "flags.y" },
+    { "from": "arith.carry", "to": "flags.carry" },
+    { "from": "flags.zero", "to": "alu.zero" },
+    { "from": "flags.carry_out", "to": "alu.carry" }
+  ]
+}

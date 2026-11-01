@@ -1,0 +1,33 @@
+{
+  "name": "chip-design",
+  "version": "0.2.0",
+  "description": "Hierarchical chip design and continuous verification loop. The agent proposes requirements, blocks and artifacts; the loop decides whether a level is verified and whether descent is allowed.",
+  "entry": "SKILL.md",
+  "tools": {
+    "loop": "scripts/design_loop.py",
+    "validator": "scripts/validate_design.py",
+    "diagram": "scripts/render_diagram.py"
+  },
+  "levels": ["spec", "architecture", "rtl", "gate", "transistor"],
+  "prompts": {
+    "spec": "prompts/01-spec.md",
+    "decompose": "prompts/02-decompose.md",
+    "repair": "prompts/03-repair.md",
+    "report": "prompts/04-report.md"
+  },
+  "references": {
+    "hierarchy": "references/hierarchy.md",
+    "verification": "references/verification.md",
+    "adapter": "references/eda-adapter.md"
+  },
+  "requires": {
+    "python": ">=3.11"
+  },
+  "exit_codes": {
+    "0": "complete: every leaf reached the target with passing checks",
+    "1": "repair: a check failed",
+    "2": "invalid: the design is structurally invalid",
+    "3": "decompose: checks passed but leaves remain below the target",
+    "4": "blocked: a check could not run; provide an adapter or tool"
+  }
+}
